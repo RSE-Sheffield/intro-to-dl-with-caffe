@@ -1,0 +1,100 @@
+name: "text_gen_lstm"
+layer{
+	name: "data"
+	type: "HDF5Data"
+	top: "input_sequence"
+	top: "cont_sequence"
+	top: "target_sequence"
+	hdf5_data_param {
+		source: "wonderland_hdf5_list.txt"
+		batch_size: 50
+	}
+}
+
+layer {
+  name: "embedding"
+  type: "Embed"
+  bottom: "input_sequence"
+  top: "embedded_input_sequence"
+  param {
+    lr_mult: 1
+  }
+  embed_param {
+    bias_term: false
+    input_dim: 43   #= vocab_size
+    num_output: 10
+    weight_filler {
+		type: "xavier"
+	   }
+
+  }
+}
+
+
+layer {
+  name: "lstm1"
+  type: "LSTM"
+  bottom: "embedded_input_sequence"
+  bottom: "cont_sequence"
+  top: "lstm1"
+  recurrent_param {
+    num_output: 256
+
+    weight_filler {
+    type: "xavier"
+     }
+  	bias_filler {
+  		type: "constant"
+  	}
+  }
+}
+
+layer {
+  name: "lstm-drop"
+  type: "Dropout"
+  bottom: "lstm1"
+  top: "lstm1"
+  dropout_param {
+    dropout_ratio: 0.35
+  }
+}
+
+layer {
+  name: "predict"
+  type: "InnerProduct"
+  bottom: "lstm1"
+  top: "predict"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 47  # = vocab_size
+
+    weight_filler {
+    type: "xavier"
+     }
+  	bias_filler {
+  		type: "constant"
+  	}
+    axis: 2
+
+  }
+}
+
+
+layer {
+  name: "cross_entropy_loss"
+  type: "SoftmaxWithLoss"
+  bottom: "predict"
+  bottom: "target_sequence"
+  top: "cross_entropy_loss"
+  softmax_param{
+  	axis: 2
+  }
+
+}

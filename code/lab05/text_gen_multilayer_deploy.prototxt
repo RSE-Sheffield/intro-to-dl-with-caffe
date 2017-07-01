@@ -1,0 +1,138 @@
+name: "text_gen_lstm"
+layer{
+  name: "cont_sequence"
+  type: "Input"
+  top: "cont_sequence"
+  input_param{
+    shape {
+      dim: 50 dim: 1
+    }
+  }
+}
+
+layer{
+  name: "input_sequence"
+  type: "Input"
+  top: "input_sequence"
+  input_param{
+    shape {
+      dim: 50 dim: 1
+    }
+  }
+}
+
+layer {
+  name: "embedding"
+  type: "Embed"
+  bottom: "input_sequence"
+  top: "embedded_input_sequence"
+  param {
+    lr_mult: 1
+  }
+  embed_param {
+    bias_term: false
+    input_dim: 47   #= vocab_size
+    num_output: 32
+    weight_filler {
+    type: "xavier"
+     }
+
+  }
+}
+
+
+layer {
+  name: "lstm1"
+  type: "LSTM"
+  bottom: "embedded_input_sequence"
+  bottom: "cont_sequence"
+  top: "lstm1"
+  recurrent_param {
+    num_output: 256
+
+    weight_filler {
+    type: "xavier"
+     }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "lstm-drop"
+  type: "Dropout"
+  bottom: "lstm1"
+  top: "lstm1"
+  dropout_param {
+    dropout_ratio: 0.35
+  }
+}
+
+layer {
+  name: "lstm2"
+  type: "LSTM"
+  bottom: "lstm1"
+  bottom: "cont_sequence"
+  top: "lstm2"
+  recurrent_param {
+    num_output: 256
+
+    weight_filler {
+    type: "xavier"
+     }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "lstm-drop"
+  type: "Dropout"
+  bottom: "lstm2"
+  top: "lstm2"
+  dropout_param {
+    dropout_ratio: 0.35
+  }
+}
+
+
+layer {
+  name: "predict"
+  type: "InnerProduct"
+  bottom: "lstm2"
+  top: "predict"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 47  # = vocab_size
+
+    weight_filler {
+    type: "xavier"
+     }
+    bias_filler {
+      type: "constant"
+    }
+    axis: 2
+
+  }
+}
+
+
+layer {
+  name: "cross_entropy_loss"
+  type: "Softmax"
+  bottom: "predict"
+  top: "probs"
+  softmax_param{
+    axis: 2
+  }
+
+}
