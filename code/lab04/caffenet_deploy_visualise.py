@@ -4,6 +4,12 @@ import numpy as np
 import caffe
 import time
 
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+
 model_path = 'code/lab04/caffenet/deploy.prototxt'
 weights_path = 'code/lab04/caffenet/bvlc_reference_caffenet.caffemodel'
 
